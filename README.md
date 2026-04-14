@@ -23,7 +23,13 @@ Para adicionar um jogo como **Lig-4**, basta criar `class Lig4(JogoTabuleiro):`,
 
 ## Como executar o jogo
 No terminal, na raiz do projeto, digite:
+
 'python -m src.main'
 
 ## Como executar os testes
 'python -m unittest discover -s tests'
+
+---
+
+### Contexto acadêmico
+Este projeto foi desenvolvido para um trabalho na disciplina de Programação Orientada a Objetos (POO) com Python, na FATEC em 2026.
