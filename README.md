@@ -33,3 +33,7 @@ No terminal, na raiz do projeto, digite:
 
 ### Contexto acadêmico
 Este projeto foi desenvolvido para um trabalho na disciplina de Programação Orientada a Objetos (POO) com Python, na FATEC em 2026.
+
+## 📄 Licença
+
+Este projeto é fornecido como avaliação acadêmica. Todos os direitos reservados.
