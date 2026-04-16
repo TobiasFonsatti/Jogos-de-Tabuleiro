@@ -1,4 +1,4 @@
-# Desafio OO – Jogos de Tabuleiro
+# Desafio POO – Jogos de Tabuleiro
 
 ## Integrantes
 - Integrante 1: Tobias Fonsatti
