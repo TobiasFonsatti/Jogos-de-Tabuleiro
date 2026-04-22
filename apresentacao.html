@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jogos de Tabuleiro — POO com Python | FATEC 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <style>
+    :root {
+      --bg-deep:    #0a0e1a;
+      --bg-card:    #111827;
+      --bg-card2:   #1a2235;
+      --border:     #1e2d45;
+      --cyan:       #00e5ff;
+      --cyan-dim:   #00b8cc;
+      --green:      #39ff84;
+      --purple:     #a855f7;
+      --purple-dim: #7c3aed;
+      --yellow:     #ffd166;
+      --red:        #ff6b6b;
+      --text:       #e2e8f0;
+      --text-muted: #64748b;
+      --text-dim:   #94a3b8;
+      --accent-1:   #00e5ff;
+      --accent-2:   #a855f7;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-deep);
+      color: var(--text);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+    }
+
+    /* ── SLIDESHOW CONTAINER ── */
+    .slideshow {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(60px);
+      transition: opacity .45s cubic-bezier(.4,0,.2,1), transform .45s cubic-bezier(.4,0,.2,1);
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    /* centering wrapper — injected by JS inside each .slide */
+    .slide-body {
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 56px 64px 96px;
+      width: 100%;
+      box-sizing: border-box;
+      position: relative;
+      z-index: 1;
+    }
+    .slide.active {
+      opacity: 1;
+      pointer-events: all;
+      transform: translateX(0);
+    }
+    .slide.exit-left {
+      opacity: 0;
+      transform: translateX(-60px);
+    }
+
+    /* ── BACKGROUND DECORATION ── */
+    .slide::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 60% at 80% 10%, rgba(0,229,255,.07) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 10% 90%, rgba(168,85,247,.07) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .slide > * { position: relative; z-index: 1; }
+
+    /* ── GRID BACKGROUND ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,255,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── NAVIGATION ── */
+    .nav {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      background: rgba(17,24,39,.8);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      padding: 10px 20px;
+    }
+
+    .nav-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .2s;
+    }
+    .nav-btn:hover {
+      border-color: var(--cyan);
+      color: var(--cyan);
+      box-shadow: 0 0 12px rgba(0,229,255,.3);
+    }
+
+    .nav-counter {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 500;
+      min-width: 60px;
+      text-align: center;
+    }
+
+    .progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+      transition: width .4s ease;
+      z-index: 100;
+      box-shadow: 0 0 10px rgba(0,229,255,.5);
+    }
+
+    /* ── SLIDE NUMBER INDICATOR DOTS ── */
+    .dots {
+      display: flex;
+      gap: 6px;
+    }
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: all .3s;
+      cursor: pointer;
+    }
+    .dot.active {
+      background: var(--cyan);
+      box-shadow: 0 0 8px rgba(0,229,255,.6);
+      width: 18px;
+      border-radius: 3px;
+    }
+
+    /* ── KEYBOARD HINT ── */
+    .keyboard-hint {
+      position: fixed;
+      top: 20px;
+      right: 24px;
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      z-index: 100;
+    }
+    .key {
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+    }
+
+    /* ── SLIDE NUMBER BADGE ── */
+    .slide-badge {
+      position: fixed;
+      top: 20px;
+      left: 24px;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+      letter-spacing: .05em;
+      z-index: 100;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    span.slide-num { color: var(--cyan); }
+
+    /* ════════════════════════════════════════
+       SLIDE-SPECIFIC COMPONENTS
+    ════════════════════════════════════════ */
+
+    /* ── TAG / CHIP ── */
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .chip-cyan  { background: rgba(0,229,255,.12); color: var(--cyan); border: 1px solid rgba(0,229,255,.25); }
+    .chip-purple{ background: rgba(168,85,247,.12); color: var(--purple); border: 1px solid rgba(168,85,247,.25); }
+    .chip-green { background: rgba(57,255,132,.12); color: var(--green); border: 1px solid rgba(57,255,132,.25); }
+    .chip-yellow{ background: rgba(255,209,102,.12); color: var(--yellow); border: 1px solid rgba(255,209,102,.25); }
+    .chip-red   { background: rgba(255,107,107,.12); color: var(--red);    border: 1px solid rgba(255,107,107,.25); }
+
+    /* ── SECTION LABEL ── */
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 12px;
+    }
+
+    /* ── BIG TITLE ── */
+    .slide-title {
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -.02em;
+    }
+    .slide-title .accent-cyan   { color: var(--cyan); }
+    .slide-title .accent-purple { color: var(--purple); }
+
+    .slide-subtitle {
+      font-size: clamp(.9rem, 1.5vw, 1.1rem);
+      color: var(--text-dim);
+      font-weight: 400;
+      margin-top: 10px;
+      line-height: 1.6;
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+      border-radius: 16px 16px 0 0;
+    }
+
+    /* ── CODE BLOCK ── */
+    .code-wrap {
+      width: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 32px rgba(0,0,0,.4);
+    }
+    .code-top {
+      background: #1e2535;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .code-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+    }
+    .code-dot.r { background: #ff5f57; }
+    .code-dot.y { background: #febc2e; }
+    .code-dot.g { background: #28c840; }
+    .code-filename {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-left: 8px;
+    }
+    .code-wrap pre {
+      margin: 0;
+      max-height: 300px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+    .code-wrap pre code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.65;
+      padding: 20px 24px !important;
+    }
+    /* Override hljs background */
+    .hljs { background: #0d1117 !important; }
+
+    /* ── HIGHLIGHT LINE ── */
+    .hl-line {
+      background: rgba(0,229,255,.08);
+      border-left: 3px solid var(--cyan);
+      margin: 0 -24px;
+      padding: 0 24px;
+      display: block;
+    }
+
+    /* ── CALLOUT ── */
+    .callout {
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-size: 14px;
+      line-height: 1.55;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .callout-cyan   { background: rgba(0,229,255,.07);  border: 1px solid rgba(0,229,255,.2);  color: var(--cyan); }
+    .callout-purple { background: rgba(168,85,247,.07); border: 1px solid rgba(168,85,247,.2); color: var(--purple); }
+    .callout-green  { background: rgba(57,255,132,.07); border: 1px solid rgba(57,255,132,.2); color: var(--green); }
+    .callout-yellow { background: rgba(255,209,102,.07);border: 1px solid rgba(255,209,102,.2);color: var(--yellow); }
+    .callout .callout-body { color: var(--text-dim); }
+    .callout .callout-body strong { color: var(--text); }
+
+    /* ── TWO-COL LAYOUT ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; width: 100%; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; width: 100%; }
+
+    /* ── LIST ── */
+    .feature-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .feature-list li {
+      display: flex; gap: 10px; align-items: flex-start;
+      font-size: 15px; color: var(--text-dim);
+      line-height: 1.5;
+    }
+    .feature-list li .icon { color: var(--cyan); font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .feature-list li strong { color: var(--text); }
+
+    /* ── UML DIAGRAM ── */
+    svg.uml { font-family: 'JetBrains Mono', monospace; }
+
+    /* ── PILLAR CARDS ── */
+    .pillar {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      text-align: center;
+      transition: transform .2s, border-color .2s;
+    }
+    .pillar:hover { transform: translateY(-3px); }
+    .pillar .pillar-icon { font-size: 32px; margin-bottom: 10px; }
+    .pillar h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+    .pillar p  { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+    .pillar.c { border-color: rgba(0,229,255,.3); }
+    .pillar.p { border-color: rgba(168,85,247,.3); }
+    .pillar.g { border-color: rgba(57,255,132,.3); }
+    .pillar.y { border-color: rgba(255,209,102,.3); }
+
+    /* ── TERMINAL ── */
+    .terminal {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      width: 100%;
+      box-shadow: 0 8px 32px rgba(0,0,0,.5);
+    }
+    .terminal-top {
+      background: #1a1f2e;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .terminal-body {
+      padding: 20px 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+    .t-prompt { color: var(--green); }
+    .t-cmd    { color: var(--text); }
+    .t-out    { color: var(--text-muted); }
+    .t-board  { color: #7dd3fc; }
+    .t-win    { color: var(--yellow); font-weight: 700; }
+    .t-x      { color: var(--cyan); font-weight: 700; }
+    .t-o      { color: var(--red); font-weight: 700; }
+    .cursor-blink {
+      display: inline-block;
+      width: 8px; height: 14px;
+      background: var(--cyan);
+      animation: blink 1s step-end infinite;
+      vertical-align: middle;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* ── TEST TABLE ── */
+    .test-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    .test-table th {
+      text-align: left;
+      padding: 10px 16px;
+      background: rgba(0,229,255,.06);
+      color: var(--cyan);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      border-bottom: 1px solid var(--border);
+    }
+    .test-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(30,45,69,.6);
+      color: var(--text-dim);
+      vertical-align: middle;
+    }
+    .test-table tr:last-child td { border-bottom: none; }
+    .badge-pass {
+      background: rgba(57,255,132,.12);
+      color: var(--green);
+      border: 1px solid rgba(57,255,132,.3);
+      border-radius: 999px;
+      padding: 2px 10px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    /* ── STAT NUMBER ── */
+    .stat-num {
+      font-size: 3rem;
+      font-weight: 800;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+      border-radius: 2px;
+      margin: 16px 0;
+    }
+
+    /* ── SLIDE 1 SPECIFIC ── */
+    #slide-1 { text-align: center; }
+    #slide-1 .game-icons { font-size: 3.5rem; display: flex; gap: 24px; justify-content: center; margin-bottom: 32px; }
+    #slide-1 .game-icons span { animation: float 3s ease-in-out infinite; }
+    #slide-1 .game-icons span:nth-child(2) { animation-delay: .5s; }
+    #slide-1 .game-icons span:nth-child(3) { animation-delay: 1s; }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-10px); }
+    }
+    #slide-1 .title-main { font-size: clamp(2.4rem, 5vw, 4rem); font-weight: 800; letter-spacing: -.03em; line-height: 1.1; }
+    #slide-1 .meta { font-size: 14px; color: var(--text-muted); margin-top: 28px; }
+    #slide-1 .meta span { color: var(--cyan); }
+    #slide-1 .members {
+      display: flex; gap: 20px; justify-content: center; margin-top: 32px;
+    }
+    #slide-1 .member {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 20px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    #slide-1 .member .avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px;
+    }
+    #slide-1 .av1 { background: linear-gradient(135deg, var(--cyan), var(--purple)); color: white; }
+    #slide-1 .av2 { background: linear-gradient(135deg, var(--purple), var(--red)); color: white; }
+
+    /* ── GLOW TEXT ── */
+    .glow-cyan   { text-shadow: 0 0 20px rgba(0,229,255,.5); color: var(--cyan); }
+    .glow-purple { text-shadow: 0 0 20px rgba(168,85,247,.5); color: var(--purple); }
+    .glow-green  { text-shadow: 0 0 20px rgba(57,255,132,.4); color: var(--green); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .slide-body { padding: 32px 24px 96px; }
+      .two-col, .three-col { grid-template-columns: 1fr; gap: 16px; }
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  </style>
+</head>
+<body>
+
+<!-- PROGRESS BAR -->
+<div class="progress-bar" id="progress"></div>
+
+<!-- SLIDE BADGE -->
+<div class="slide-badge" id="slide-badge">
+  <span class="slide-num" id="sn">01</span> / <span id="st">10</span>
+</div>
+
+<!-- KEYBOARD HINT -->
+<div class="keyboard-hint">
+  <span class="key">←</span> <span class="key">→</span> navegar
+  &nbsp;|&nbsp;
+  <span class="key">F</span> tela cheia
+</div>
+
+<!-- ████████████████████████████████████████
+     SLIDE 1 — CAPA
+████████████████████████████████████████ -->
+<div class="slideshow">
+
+<section class="slide active" id="slide-1">
+  <div class="game-icons">
+    <span title="Jogo da Velha">✖️</span>
+    <span title="Lig-4">🔴</span>
+    <span title="Damas">♟️</span>
+  </div>
+
+  <p class="section-label">Programação Orientada a Objetos</p>
+  <h1 class="title-main">
+    Jogos de Tabuleiro<br>
+    <span class="glow-cyan">com Python</span>
+  </h1>
+
+  <p class="meta">
+    FATEC Ribeirão Preto &nbsp;·&nbsp; <span>2026</span> &nbsp;·&nbsp; Disciplina de POO
+  </p>
+
+  <div class="members">
+    <div class="member">
+      <div class="avatar av1">T</div>
+      <div>
+        <div style="font-weight:600;font-size:14px;">Tobias Fonsatti</div>
+        <div style="font-size:12px;color:var(--text-muted);">Integrante 1</div>
+      </div>
+    </div>
+    <div class="member">
+      <div class="avatar av2">G</div>
+      <div>
+        <div style="font-weight:600;font-size:14px;">Guilherme Rastellii</div>
+        <div style="font-size:12px;color:var(--text-muted);">Integrante 2</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:40px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+    <span class="chip chip-cyan">Python 3</span>
+    <span class="chip chip-purple">POO</span>
+    <span class="chip chip-green">SOLID</span>
+    <span class="chip chip-yellow">Template Method</span>
+  </div>
+</section>
+
+<!-- ████████████████████████████████████████
+     SLIDE 2 — O PROBLEMA
+████████████████████████████████████████ -->
+<section class="slide" id="slide-2">
+  <div style="width:100%;max-width:820px;">
+    <p class="section-label">Motivação</p>
+    <h2 class="slide-title">Como criar múltiplos jogos<br><span class="accent-cyan">sem duplicar código?</span></h2>
+    <div class="divider"></div>
+
+    <div class="two-col" style="margin-top:28px;">
+      <div class="card" style="border-color:rgba(255,107,107,.3);">
+        <div style="color:var(--red);font-size:13px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+          ❌ Sem arquitetura
+        </div>
+        <ul class="feature-list">
+          <li><span class="icon" style="color:var(--red);">•</span><span>Cada jogo reimplementa o loop de turnos</span></li>
+          <li><span class="icon" style="color:var(--red);">•</span><span>Código de validação duplicado</span></li>
+          <li><span class="icon" style="color:var(--red);">•</span><span>Adicionar um novo jogo = reescrever tudo</span></li>
+          <li><span class="icon" style="color:var(--red);">•</span><span>Nenhuma padronização entre jogos</span></li>
+          <li><span class="icon" style="color:var(--red);">•</span><span>Bugs se repetem em cada jogo</span></li>
+        </ul>
+      </div>
+
+      <div class="card" style="border-color:rgba(57,255,132,.3);">
+        <div style="color:var(--green);font-size:13px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+          ✅ Com POO + SOLID
+        </div>
+        <ul class="feature-list">
+          <li><span class="icon">✦</span><span><strong>Loop único</strong> reutilizado por todos os jogos</span></li>
+          <li><span class="icon">✦</span><span><strong>Tabuleiro genérico</strong> de qualquer tamanho</span></li>
+          <li><span class="icon">✦</span><span><strong>Novo jogo</strong> = herdar e sobrescrever só o necessário</span></li>
+          <li><span class="icon">✦</span><span><strong>Contrato claro</strong> via classe abstrata</span></li>
+          <li><span class="icon">✦</span><span><strong>Testes unitários</strong> no núcleo central</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout callout-cyan" style="margin-top:20px;">
+      <span>💡</span>
+      <div class="callout-body">
+        <strong>Solução:</strong> Criamos um núcleo genérico (<code>src/core</code>) com classes base que encapsulam toda a lógica compartilhada. Cada jogo herda e especializa apenas o que precisa.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ████████████████████████████████████████
+     SLIDE 3 — ARQUITETURA / UML
+████████████████████████████████████████ -->
+<section class="slide" id="slide-3">
+  <div style="width:100%;max-width:900px;">
+    <p class="section-label">Design do Sistema</p>
+    <h2 class="slide-title">Arquitetura <span class="accent-cyan">Orientada a Objetos</span></h2>
+    <div class="divider"></div>
+
+    <div class="two-col" style="margin-top:20px;align-items:start;">
+      <!-- UML SVG -->
+      <div>
+        <svg viewBox="0 0 400 340" width="100%" class="uml" style="font-size:11px;">
+          <!-- Peca -->
+          <rect x="10" y="10" width="120" height="58" rx="8" fill="#1a2235" stroke="#00e5ff" stroke-width="1.5"/>
+          <rect x="10" y="10" width="120" height="22" rx="8" fill="rgba(0,229,255,.15)"/>
+          <rect x="10" y="28" width="120" height="4" fill="rgba(0,229,255,.15)"/>
+          <text x="70" y="25" text-anchor="middle" fill="#00e5ff" font-weight="700" font-size="12">Peca</text>
+          <text x="20" y="44" fill="#94a3b8" font-size="10">- simbolo: str</text>
+          <text x="20" y="58" fill="#94a3b8" font-size="10">+ __str__()</text>
+
+          <!-- Jogador -->
+          <rect x="10" y="100" width="140" height="72" rx="8" fill="#1a2235" stroke="#a855f7" stroke-width="1.5"/>
+          <rect x="10" y="100" width="140" height="22" rx="8" fill="rgba(168,85,247,.15)"/>
+          <rect x="10" y="118" width="140" height="4" fill="rgba(168,85,247,.15)"/>
+          <text x="80" y="115" text-anchor="middle" fill="#a855f7" font-weight="700" font-size="12">Jogador</text>
+          <text x="20" y="134" fill="#94a3b8" font-size="10">- nome: str</text>
+          <text x="20" y="148" fill="#94a3b8" font-size="10">- peca: Peca</text>
+          <text x="20" y="162" fill="#94a3b8" font-size="10">+ nome, peca (props)</text>
+
+          <!-- Arrow Peca → Jogador (associação) -->
+          <line x1="70" y1="68" x2="70" y2="100" stroke="#64748b" stroke-width="1.2" stroke-dasharray="4,3"/>
+          <polygon points="70,100 66,92 74,92" fill="#64748b"/>
+          <text x="76" y="86" fill="#64748b" font-size="9">tem</text>
+
+          <!-- Tabuleiro -->
+          <rect x="260" y="10" width="130" height="82" rx="8" fill="#1a2235" stroke="#39ff84" stroke-width="1.5"/>
+          <rect x="260" y="10" width="130" height="22" rx="8" fill="rgba(57,255,132,.1)"/>
+          <rect x="260" y="28" width="130" height="4" fill="rgba(57,255,132,.1)"/>
+          <text x="325" y="25" text-anchor="middle" fill="#39ff84" font-weight="700" font-size="12">Tabuleiro</text>
+          <text x="270" y="44" fill="#94a3b8" font-size="10">- linhas, colunas</text>
+          <text x="270" y="57" fill="#94a3b8" font-size="10">- _grid: list</text>
+          <text x="270" y="70" fill="#94a3b8" font-size="10">+ posicionar_peca()</text>
+          <text x="270" y="83" fill="#94a3b8" font-size="10">+ is_vazio(), exibir()</text>
+
+          <!-- JogoTabuleiro -->
+          <rect x="160" y="120" width="160" height="90" rx="8" fill="#1a2235" stroke="#ffd166" stroke-width="1.5"/>
+          <rect x="160" y="120" width="160" height="22" rx="8" fill="rgba(255,209,102,.1)"/>
+          <rect x="160" y="138" width="160" height="4" fill="rgba(255,209,102,.1)"/>
+          <text x="240" y="135" text-anchor="middle" fill="#ffd166" font-weight="700" font-size="11">«abstract»</text>
+          <text x="240" y="148" text-anchor="middle" fill="#ffd166" font-weight="700" font-size="12">JogoTabuleiro</text>
+          <text x="168" y="163" fill="#94a3b8" font-size="10">+ jogar() ← Template</text>
+          <text x="168" y="175" fill="#94a3b8" font-size="9" font-style="italic">+ inicializar_tabuleiro()</text>
+          <text x="168" y="187" fill="#94a3b8" font-size="9" font-style="italic">+ validar_jogada()</text>
+          <text x="168" y="199" fill="#94a3b8" font-size="9" font-style="italic">+ verificar_fim_de_jogo()</text>
+
+          <!-- Arrow JogoTabuleiro → Tabuleiro (agregação) -->
+          <line x1="320" y1="92" x2="290" y2="122" stroke="#39ff84" stroke-width="1.2"/>
+          <polygon points="290,122 293,112 300,118" fill="none" stroke="#39ff84" stroke-width="1.5"/>
+          <text x="295" y="108" fill="#39ff84" font-size="8">agrega</text>
+
+          <!-- Arrow JogoTabuleiro → Jogador (agregação) -->
+          <line x1="162" y1="155" x2="150" y2="155" stroke="#a855f7" stroke-width="1.2"/>
+          <line x1="150" y1="155" x2="150" y2="136" stroke="#a855f7" stroke-width="1.2"/>
+
+          <!-- Subclasses -->
+          <rect x="40" y="250" width="100" height="38" rx="8" fill="#1a2235" stroke="#00e5ff" stroke-width="1.2"/>
+          <text x="90" y="265" text-anchor="middle" fill="#00e5ff" font-size="11" font-weight="700">JogoDaVelha</text>
+          <text x="90" y="280" text-anchor="middle" fill="#64748b" font-size="9">3×3</text>
+
+          <rect x="170" y="250" width="80" height="38" rx="8" fill="#1a2235" stroke="#00e5ff" stroke-width="1.2"/>
+          <text x="210" y="265" text-anchor="middle" fill="#00e5ff" font-size="11" font-weight="700">Lig4</text>
+          <text x="210" y="280" text-anchor="middle" fill="#64748b" font-size="9">6×7</text>
+
+          <rect x="280" y="250" width="100" height="38" rx="8" fill="#1a2235" stroke="#00e5ff" stroke-width="1.2"/>
+          <text x="330" y="265" text-anchor="middle" fill="#00e5ff" font-size="11" font-weight="700">Damas</text>
+          <text x="330" y="280" text-anchor="middle" fill="#64748b" font-size="9">8×8</text>
+
+          <!-- Herança arrows -->
+          <line x1="90" y1="250" x2="200" y2="210" stroke="#ffd166" stroke-width="1.2"/>
+          <line x1="210" y1="250" x2="230" y2="210" stroke="#ffd166" stroke-width="1.2"/>
+          <line x1="330" y1="250" x2="260" y2="210" stroke="#ffd166" stroke-width="1.2"/>
+          <polygon points="200,210 194,220 206,220" fill="none" stroke="#ffd166" stroke-width="1.5"/>
+          <polygon points="230,210 224,220 236,220" fill="none" stroke="#ffd166" stroke-width="1.5"/>
+          <polygon points="260,210 254,220 266,220" fill="none" stroke="#ffd166" stroke-width="1.5"/>
+
+          <!-- Legend -->
+          <line x1="20" y1="320" x2="40" y2="320" stroke="#ffd166" stroke-width="1.2"/>
+          <polygon points="40,320 35,317 35,323" fill="none" stroke="#ffd166" stroke-width="1.2"/>
+          <text x="44" y="324" fill="#64748b" font-size="9">Herança</text>
+          <line x1="100" y1="320" x2="120" y2="320" stroke="#64748b" stroke-width="1.2" stroke-dasharray="4,3"/>
+          <polygon points="120,320 115,317 115,323" fill="#64748b"/>
+          <text x="124" y="324" fill="#64748b" font-size="9">Associação</text>
+          <line x1="204" y1="320" x2="224" y2="320" stroke="#39ff84" stroke-width="1.2"/>
+          <polygon points="204,320 209,317 209,323" fill="none" stroke="#39ff84" stroke-width="1.2"/>
+          <text x="228" y="324" fill="#64748b" font-size="9">Agregação</text>
+        </svg>
+      </div>
+
+      <!-- Relações -->
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="callout callout-purple">
+          <span>🔗</span>
+          <div class="callout-body"><strong>Associação:</strong> Um <code>Jogador</code> <em>tem</em> uma <code>Peca</code>.</div>
+        </div>
+        <div class="callout callout-green">
+          <span>📦</span>
+          <div class="callout-body"><strong>Agregação:</strong> <code>JogoTabuleiro</code> recebe um <code>Tabuleiro</code> e lista de <code>Jogadores</code>.</div>
+        </div>
+        <div class="callout callout-yellow" style="border-color:rgba(255,209,102,.3);background:rgba(255,209,102,.07);color:var(--yellow);">
+          <span>🧬</span>
+          <div class="callout-body"><strong>Herança:</strong> <code>JogoDaVelha</code>, <code>Lig4</code> e <code>Damas</code> herdam de <code>JogoTabuleiro</code>.</div>
+        </div>
+        <div class="card" style="margin-top:4px;">
+          <p style="font-size:13px;color:var(--text-muted);line-height:1.6;">
+            O núcleo em <code style="color:var(--cyan);">src/core</code> é <strong style="color:var(--text);">independente</strong> dos jogos. Nenhum arquivo de <code>jogos/</code> é importado pelo core.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ████████████████████████████████████████
+     SLIDE 4 — ENCAPSULAMENTO / TABULEIRO
+████████████████████████████████████████ -->
+<section class="slide" id="slide-4">
+  <div style="width:100%;max-width:900px;">
+    <p class="section-label">Pilar 1 de POO</p>
+    <h2 class="slide-title">Encapsulamento —<br><span class="accent-cyan">classe Tabuleiro</span></h2>
+    <div class="divider"></div>
+
+    <div class="two-col" style="margin-top:20px;align-items:start;">
+      <div class="code-wrap">
+        <div class="code-top">
+          <div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div>
+          <span class="code-filename">src/core/tabuleiro.py</span>
+        </div>
+        <pre><code class="language-python">class Tabuleiro:
+    def __init__(self, linhas: int, colunas: int):
+        self._linhas = linhas     # privado
+        self._colunas = colunas   # privado
+        self._grid = [            # privado
+            [None for _ in range(colunas)]
+            for _ in range(linhas)
+        ]
+
+    def posicao_valida(self, linha, coluna) -> bool:
+        return (0 <= linha < self._linhas and
+                0 <= coluna < self._colunas)
+
+    def is_vazio(self, linha, coluna) -> bool:
+        return self._grid[linha][coluna] is None
+
+    def posicionar_peca(self, linha, coluna, peca):
+        if self.posicao_valida(linha, coluna) \
+                and self.is_vazio(linha, coluna):
+            self._grid[linha][coluna] = peca
+            return True
+        return False</code></pre>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="callout callout-cyan">
+          <span>🔒</span>
+          <div class="callout-body">
+            Atributos com <strong><code>_underscore</code></strong> são <strong>privados por convenção</strong>. Acesso externo só via métodos públicos.
+          </div>
+        </div>
+        <div class="callout callout-purple">
+          <span>🎯</span>
+          <div class="callout-body">
+            <strong>Responsabilidade Única (SRP):</strong> o Tabuleiro gerencia <em>apenas a grade</em>. Ele não sabe nada sobre as regras do Jogo da Velha ou do Lig-4.
+          </div>
+        </div>
+        <div class="card">
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;">Instâncias usadas</p>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;">
+              <span style="color:var(--text-dim);">Jogo da Velha</span>
+              <span class="chip chip-cyan" style="font-size:10px;">Tabuleiro(3, 3)</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;">
+              <span style="color:var(--text-dim);">Lig-4</span>
+              <span class="chip chip-purple" style="font-size:10px;">Tabuleiro(6, 7)</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;">
+              <span style="color:var(--text-dim);">Damas</span>
+              <span class="chip chip-green" style="font-size:10px;">Tabuleiro(8, 8)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ████████████████████████████████████████
+     SLIDE 5 — ABSTRAÇÃO + TEMPLATE METHOD
+████████████████████████████████████████ -->
+<section class="slide" id="slide-5">
+  <div style="width:100%;max-width:900px;">
+    <p class="section-label">Pilar 2 de POO + Padrão de Projeto</p>
+    <h2 class="slide-title">Abstração &amp; <span class="accent-purple">Template Method</span></h2>
+    <div class="divider"></div>
+
+    <div class="two-col" style="margin-top:20px;align-items:start;">
+      <div class="code-wrap">
+        <div class="code-top">
+          <div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div>
+          <span class="code-filename">src/core/jogo_base.py</span>
+        </div>
+        <pre><code class="language-python">from abc import ABC, abstractmethod
+
+class JogoTabuleiro(ABC):
+
+    @abstractmethod
+    def inicializar_tabuleiro(self): ...
+
+    @abstractmethod
+    def validar_jogada(self, *args) -> bool: ...
+
+    @abstractmethod
+    def aplicar_jogada(self, *args) -> bool: ...
+
+    @abstractmethod
+    def verificar_fim_de_jogo(self) -> bool: ...
+
+    # ← TEMPLATE METHOD: define o esqueleto do jogo
+    def jogar(self):
+        self.inicializar_tabuleiro()
+        while self._status == "EM_ANDAMENTO":
+            self._tabuleiro.exibir()
+            print(f"Turno de {self.jogador_atual.nome}")
+            # delega para a subclasse:
+            self.aplicar_jogada(...)
+        # exibe resultado final
+        self._tabuleiro.exibir()</code></pre>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="callout callout-purple">
+          <span>🧩</span>
+          <div class="callout-body">
+            <strong>Classe Abstrata (ABC):</strong> não pode ser instanciada diretamente. Garante que todo jogo implemente os métodos obrigatórios.
+          </div>
+        </div>
+        <div class="callout callout-yellow" style="border-color:rgba(255,209,102,.3);background:rgba(255,209,102,.07);color:var(--yellow);">
+          <span>📐</span>
+          <div class="callout-body">
+            <strong>Template Method:</strong> o método <code>jogar()</code> define o fluxo geral (loop, exibição, alternância de turno). As subclasses preenchem apenas os <em>passos específicos</em>.
+          </div>
+        </div>
+        <div class="card">
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;">Fluxo do Template Method</p>
+          <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;">
+            <div style="display:flex;align-items:center;gap:8px;color:var(--cyan);">
+              <span style="font-size:16px;">①</span> <code>inicializar_tabuleiro()</code> <span style="color:var(--text-muted);font-size:11px;">← subclasse</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;color:var(--text-dim);">
+              <span style="font-size:16px;">②</span> Loop enquanto EM_ANDAMENTO
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;color:var(--cyan);">
+              <span style="font-size:16px;">③</span> <code>aplicar_jogada()</code> <span style="color:var(--text-muted);font-size:11px;">← subclasse</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;color:var(--cyan);">
+              <span style="font-size:16px;">④</span> <code>verificar_fim_de_jogo()</code> <span style="color:var(--text-muted);font-size:11px;">← subclasse</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;color:var(--text-dim);">
+              <span style="font-size:16px;">⑤</span> Exibe resultado final
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ████████████████████████████████████████
+     SLIDE 6 — POLIMORFISMO
+████████████████████████████████████████ -->
+<section class="slide" id="slide-6">
+  <div style="width:100%;max-width:860px;">
+    <p class="section-label">Pilar 3 de POO</p>
+    <h2 class="slide-title">Polimorfismo —<br><span class="accent-cyan">um comando, três jogos</span></h2>
+    <div class="divider"></div>
+
+    <div class="two-col" style="margin-top:20px;align-items:start;">
+      <div class="code-wrap">
+        <div class="code-top">
+          <div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div>
+          <span class="code-filename">src/main.py</span>
+        </div>
+        <pre><code class="language-python">if escolha == "1":
+    jogo = JogoDaVelha(jogador1, jogador2)
+
+elif escolha == "2":
+    jogador1 = Jogador(nome1, Peca("🔴"))
+    jogador2 = Jogador(nome2, Peca("🟡"))
+    jogo = Lig4(jogador1, jogador2)
+
+elif escolha == "3":
+    jogo = DamasSimplificado(jogador1, jogador2)
+
+# ✨ Polimorfismo: não importa qual jogo
+# foi instanciado — o método jogar()
+# sabe exatamente o que fazer!
+jogo.jogar()</code></pre>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="callout callout-cyan">
+          <span>✨</span>
+          <div class="callout-body">
+            <strong>Polimorfismo:</strong> a linha <code>jogo.jogar()</code> é sempre a mesma — mas o Python executa o comportamento correto de acordo com o tipo real do objeto em tempo de execução.
+          </div>
+        </div>
+
+        <div class="card">
+          <p style="font-size:12px;color:var(--text-muted);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px;">O que muda por jogo</p>
+          <table style="width:100%;font-size:12px;border-collapse:collapse;">
+            <thead>
+              <tr>
+                <th style="text-align:left;color:var(--text-muted);padding:4px 0;border-bottom:1px solid var(--border);">Jogo</th>
+                <th style="text-align:left;color:var(--text-muted);padding:4px 8px;border-bottom:1px solid var(--border);">Tabuleiro</th>
+                <th style="text-align:left;color:var(--text-muted);padding:4px 0;border-bottom:1px solid var(--border);">Diferencial</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding:8px 0;color:var(--cyan);">Velha</td>
+                <td style="padding:8px 8px;color:var(--text-dim);">3×3</td>
+                <td style="padding:8px 0;color:var(--text-dim);">Verifica linhas e diagonais</td>
+              </tr>
+              <tr>
+                <td style="padding:8px 0;color:var(--yellow);">Lig-4</td>
+                <td style="padding:8px 8px;color:var(--text-dim);">6×7</td>
+                <td style="padding:8px 0;color:var(--text-dim);">Gravidade na coluna</td>
+              </tr>
+              <tr>
+                <td style="padding:8px 0;color:var(--green);">Damas</td>
+                <td style="padding:8px 8px;color:var(--text-dim);">8×8</td>
+                <td style="padding:8px 0;color:var(--text-dim);">Movimento diagonal + captura</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout-green">
+          <span>🎯</span>
+          <div class="callout-body">
+            <strong>O código principal não precisa saber qual jogo vai rodar.</strong> Isso é polimorfismo na prática.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ████████████████████████████████████████
+     SLIDE 7 — HERANÇA / JOGO DA VELHA
+████████████████████████████████████████ -->
+<section class="slide" id="slide-7">
+  <div style="width:100%;max-width:900px;">
+    <p class="section-label">Pilar 4 de POO</p>
+    <h2 class="slide-title">Herança —<br><span class="accent-cyan">JogoDaVelha</span> em detalhe</h2>
+    <div class="divider"></div>
+
+    <div class="two-col" style="margin-top:20px;align-items:start;">
+      <div class="code-wrap">
+        <div class="code-top">
+          <div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div>
+          <span class="code-filename">jogos/jogo_da_velha.py</span>
+        </div>
+        <pre><code class="language-python">class JogoDaVelha(JogoTabuleiro):
+
+    def __init__(self, jogador1, jogador2):
+        # Herda TUDO: turnos, status, jogadores
+        super().__init__(
+            [jogador1, jogador2],
+            Tabuleiro(3, 3)  # tabuleiro 3×3
+        )
+
+    def inicializar_tabuleiro(self):
+        pass  # começa vazio
+
+    def validar_jogada(self, linha, coluna):
+        return self._tabuleiro.is_vazio(linha, coluna)
+
+    def aplicar_jogada(self, linha, coluna):
+        if self.validar_jogada(linha, coluna):
+            peca = self.jogador_atual.peca
+            self._tabuleiro.posicionar_peca(linha, coluna, peca)
+            if self.verificar_fim_de_jogo():
+                self._status = "FINALIZADO"
+            else:
+                self.alternar_turno()
+            return True
+        return False</code></pre>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="callout callout-cyan">
+          <span>🧬</span>
+          <div class="callout-body">
+            Com <strong><code>super().__init__()</code></strong>, o Jogo da Velha herda automaticamente: alternância de turnos, propriedade <code>jogador_atual</code>, controle de status e o loop do Template Method.
+          </div>
+        </div>
+
+        <div class="card">
+          <p style="font-size:12px;color:var(--text-muted);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;">O que a subclasse implementa</p>
+          <ul class="feature-list">
+            <li><span class="icon">✅</span><span><strong>validar_jogada</strong>: posição vazia?</span></li>
+            <li><span class="icon">✅</span><span><strong>aplicar_jogada</strong>: posiciona peça e checa fim</span></li>
+            <li><span class="icon">✅</span><span><strong>verificar_fim_de_jogo</strong>: linhas, colunas, diagonais e empate</span></li>
+          </ul>
+        </div>
+
+        <div class="terminal">
+          <div class="terminal-top">
+            <div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div>
+            <span class="code-filename" style="font-size:11px;">Terminal — tabuleiro 3×3</span>
+          </div>
+          <div class="terminal-body" style="padding:14px 18px;font-size:12px;">
+            <div class="t-board"> X | O |  </div>
+            <div class="t-board">-----------</div>
+            <div class="t-board">   | X | O</div>
+            <div class="t-board">-----------</div>
+            <div class="t-board"> O | O | X </div>
+            <br>
+            <div class="t-win">🏆 O vencedor é Tobias!</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ████████████████████████████████████████
+     SLIDE 8 — EXTENSIBILIDADE / LIG-4 + DAMAS
+████████████████████████████████████████ -->
+<section class="slide" id="slide-8">
+  <div style="width:100%;max-width:900px;">
+    <p class="section-label">Princípio Aberto/Fechado (SOLID)</p>
+    <h2 class="slide-title">Extensibilidade —<br><span class="accent-green">adicionar um jogo é simples</span></h2>
+    <div class="divider"></div>
+
+    <div class="two-col" style="margin-top:20px;align-items:start;">
+      <div>
+        <div class="code-wrap">
+          <div class="code-top">
+            <div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div>
+            <span class="code-filename">jogos/lig4.py — gravidade</span>
+          </div>
+          <pre><code class="language-python">class Lig4(JogoTabuleiro):
+
+    def __init__(self, jogador1, jogador2):
+        super().__init__(
+            [jogador1, jogador2],
+            Tabuleiro(6, 7)  # 6 linhas, 7 colunas
+        )
+
+    # Gravidade: peça cai para linha mais baixa
+    def aplicar_jogada(self, coluna: int) -> bool:
+        if self.validar_jogada(coluna):
+            for linha in range(5, -1, -1):
+                if self._tabuleiro.is_vazio(linha, coluna):
+                    self._tabuleiro.posicionar_peca(
+                        linha, coluna, self.jogador_atual.peca
+                    )
+                    break
+            ...</code></pre>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="callout callout-green">
+          <span>🔓</span>
+          <div class="callout-body">
+            <strong>Open/Closed Principle:</strong> o sistema é <em>aberto para extensão</em> (novos jogos) e <em>fechado para modificação</em> (o core não precisa mudar).
+          </div>
+        </div>
+
+        <div class="card">
+          <p style="font-size:12px;color:var(--text-muted);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px;">Quanto trabalho para criar cada jogo?</p>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;font-size:13px;">
+                <span style="color:var(--text-dim);">Jogo da Velha</span>
+                <span style="color:var(--cyan);font-family:'JetBrains Mono',monospace;font-size:11px;">~61 linhas</span>
+              </div>
+              <div style="background:var(--border);border-radius:4px;height:6px;overflow:hidden;">
+                <div style="background:var(--cyan);width:45%;height:100%;border-radius:4px;"></div>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;font-size:13px;">
+                <span style="color:var(--text-dim);">Lig-4 (com gravidade e 4 direções)</span>
+                <span style="color:var(--yellow);font-family:'JetBrains Mono',monospace;font-size:11px;">~95 linhas</span>
+              </div>
+              <div style="background:var(--border);border-radius:4px;height:6px;overflow:hidden;">
+                <div style="background:var(--yellow);width:65%;height:100%;border-radius:4px;"></div>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;font-size:13px;">
+                <span style="color:var(--text-dim);">Damas (movimentação + captura)</span>
+                <span style="color:var(--green);font-family:'JetBrains Mono',monospace;font-size:11px;">~menor</span>
+              </div>
+              <div style="background:var(--border);border-radius:4px;height:6px;overflow:hidden;">
+                <div style="background:var(--green);width:55%;height:100%;border-radius:4px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout callout-cyan">
+          <span>💡</span>
+          <div class="callout-body">
+            Nenhuma dessas implementações precisou <strong>alterar uma linha</strong> de <code>src/core/</code>. O core é estável e reutilizável.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ████████████████████████████████████████
+     SLIDE 9 — TESTES
+████████████████████████████████████████ -->
+<section class="slide" id="slide-9">
+  <div style="width:100%;max-width:900px;">
+    <p class="section-label">Qualidade de Software</p>
+    <h2 class="slide-title">Testes Unitários —<br><span class="accent-cyan">garantindo que funciona</span></h2>
+    <div class="divider"></div>
+
+    <div class="two-col" style="margin-top:20px;align-items:start;">
+      <div class="code-wrap">
+        <div class="code-top">
+          <div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div>
+          <span class="code-filename">tests/test_jogo_da_velha.py</span>
+        </div>
+        <pre><code class="language-python">class TestJogoDaVelha(unittest.TestCase):
+
+    def setUp(self):
+        self.j1 = Jogador("Alice", Peca("X"))
+        self.j2 = Jogador("Bob",   Peca("O"))
+        self.jogo = JogoDaVelha(self.j1, self.j2)
+
+    def test_jogada_invalida_fora_do_tabuleiro(self):
+        # Posição (3,3) não existe no grid 3×3
+        self.assertFalse(self.jogo.aplicar_jogada(3, 3))
+
+    def test_jogada_invalida_posicao_ocupada(self):
+        self.jogo.aplicar_jogada(0, 0)  # ocupa (0,0)
+        self.assertFalse(self.jogo.aplicar_jogada(0, 0))
+
+    def test_vitoria_linha(self):
+        # Alice: (0,0), (0,1), (0,2) → vitória!
+        self.jogo.aplicar_jogada(0, 0)
+        self.jogo.aplicar_jogada(1, 0)
+        self.jogo.aplicar_jogada(0, 1)
+        self.jogo.aplicar_jogada(1, 1)
+        self.jogo.aplicar_jogada(0, 2)
+        self.assertEqual(self.jogo._status, "FINALIZADO")
+        self.assertEqual(self.jogo._vencedor, self.j1)</code></pre>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="card">
+          <p style="font-size:12px;color:var(--text-muted);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px;">Casos de teste cobertos</p>
+          <table class="test-table">
+            <thead>
+              <tr><th>Teste</th><th>Resultado</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Jogada fora do tabuleiro</td>
+                <td><span class="badge-pass">✅ PASS</span></td>
+              </tr>
+              <tr>
+                <td>Posição já ocupada</td>
+                <td><span class="badge-pass">✅ PASS</span></td>
+              </tr>
+              <tr>
+                <td>Vitória por linha</td>
+                <td><span class="badge-pass">✅ PASS</span></td>
+              </tr>
+              <tr>
+                <td>Alternância de turnos</td>
+                <td><span class="badge-pass">✅ PASS</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="terminal">
+          <div class="terminal-top">
+            <div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div>
+            <span class="code-filename" style="font-size:11px;">Executar testes</span>
+          </div>
+          <div class="terminal-body" style="font-size:12px;padding:14px 18px;">
+            <div><span class="t-prompt">$</span> <span class="t-cmd">python -m unittest discover -s tests</span></div>
+            <div class="t-out">......</div>
+            <div class="t-win">Ran 4 tests in 0.002s</div>
+            <div class="t-win">OK</div>
+          </div>
+        </div>
+
+        <div class="callout callout-purple">
+          <span>🛡️</span>
+          <div class="callout-body">
+            Testes unitários garantem que ao adicionar novos jogos, o núcleo continua funcionando corretamente.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ████████████████████████████████████████
+     SLIDE 10 — DEMO
+████████████████████████████████████████ -->
+<section class="slide" id="slide-10">
+  <div style="width:100%;max-width:760px;text-align:center;">
+    <p class="section-label">Ao vivo</p>
+    <h2 class="slide-title" style="text-align:center;">
+      <span class="glow-cyan">Demonstração</span>
+    </h2>
+    <div class="divider" style="margin:16px auto;"></div>
+
+    <div class="terminal" style="text-align:left;margin-top:28px;">
+      <div class="terminal-top">
+        <div class="code-dot r"></div><div class="code-dot y"></div><div class="code-dot g"></div>
+        <span class="code-filename" style="font-size:11px;">PowerShell — raiz do projeto</span>
+      </div>
+      <div class="terminal-body">
+        <div><span class="t-prompt">PS C:\Dev\Faculdade\Jogos-de-Tabuleiro&gt;</span> <span class="t-cmd">python -m src.main</span></div>
+        <br>
+        <div style="color:var(--yellow);font-weight:600;">=== Bem-vindo aos Jogos de Tabuleiro ===</div>
+        <div class="t-out">Nome do Jogador 1: <span style="color:var(--text);">Tobias</span></div>
+        <div class="t-out">Nome do Jogador 2: <span style="color:var(--text);">Guilherme</span></div>
+        <br>
+        <div class="t-out">Escolha o jogo:</div>
+        <div class="t-out">1 - Jogo da Velha</div>
+        <div class="t-out">2 - Lig-4</div>
+        <div class="t-out">3 - Damas (Simplificado)</div>
+        <div class="t-out">Digite o número do jogo: <span style="color:var(--text);">1</span></div>
+        <br>
+        <div class="t-board">   |   |  </div>
+        <div class="t-board">-----------</div>
+        <div class="t-board">   |   |  </div>
+        <div class="t-board">-----------</div>
+        <div class="t-board">   |   |  </div>
+        <br>
+        <div class="t-out">Turno de <span class="t-x">Tobias (X)</span></div>
+        <div class="t-out">Digite a linha e coluna (ex: 0 2): <span class="cursor-blink"></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+</div><!-- /.slideshow -->
+
+<!-- NAVIGATION -->
+<nav class="nav">
+  <button class="nav-btn" id="btn-prev" onclick="navigate(-1)" title="Anterior (←)">‹</button>
+  <div class="dots" id="dots"></div>
+  <span class="nav-counter" id="counter">1 / 11</span>
+  <button class="nav-btn" id="btn-next" onclick="navigate(1)" title="Próximo (→)">›</button>
+</nav>
+
+<script>
+  // Wrap each slide's DOM children in a centering div (.slide-body)
+  // This separates the scroll container from the flex-centering container,
+  // fixing scrollbar position and layout issues.
+  document.querySelectorAll('.slide').forEach(slide => {
+    const body = document.createElement('div');
+    body.className = 'slide-body';
+    Array.from(slide.childNodes).forEach(node => body.appendChild(node));
+    slide.appendChild(body);
+  });
+
+  hljs.highlightAll();
+
+  const slides = document.querySelectorAll('.slide');
+  const total  = slides.length;
+  let current  = 0;
+
+  // Build dots
+  const dotsEl = document.getElementById('dots');
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.addEventListener('click', () => goTo(i));
+    dotsEl.appendChild(d);
+  });
+
+  function updateUI() {
+    const progress = document.getElementById('progress');
+    const counter  = document.getElementById('counter');
+    const sn       = document.getElementById('sn');
+    const dots     = document.querySelectorAll('.dot');
+
+    progress.style.width = ((current + 1) / total * 100) + '%';
+    counter.textContent  = `${current + 1} / ${total}`;
+    sn.textContent       = String(current + 1).padStart(2, '0');
+
+    dots.forEach((d, i) => d.classList.toggle('active', i === current));
+    document.getElementById('btn-prev').style.opacity = current === 0 ? '.3' : '1';
+    document.getElementById('btn-next').style.opacity = current === total - 1 ? '.3' : '1';
+  }
+
+  function goTo(idx) {
+    if (idx < 0 || idx >= total) return;
+    slides[current].classList.remove('active');
+    slides[current].classList.add('exit-left');
+    setTimeout(() => slides[current].classList.remove('exit-left'), 450);
+
+    current = idx;
+    slides[current].classList.add('active');
+    slides[current].scrollTop = 0;  // reset scroll position on slide change
+    updateUI();
+  }
+
+  function navigate(dir) { goTo(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown')  navigate(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')    navigate(-1);
+    if (e.key === 'f' || e.key === 'F') {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  });
+
+  // Touch/swipe
+  let touchStartX = 0;
+  document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
+  document.addEventListener('touchend',   e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) navigate(dx < 0 ? 1 : -1);
+  });
+
+  updateUI();
+</script>
+</body>
+</html>
